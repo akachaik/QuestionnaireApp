@@ -9,13 +9,11 @@ namespace QuestionnaireApp.Controllers
     [Route("[controller]")]
     public class QuestionsController : ControllerBase
     {
-        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ISessionService _sessionService;
         private readonly List<Question> _questions;
         
-        public QuestionsController(IHttpContextAccessor httpContextAccessor, ISessionService sessionService)
+        public QuestionsController(ISessionService sessionService)
         {
-            _httpContextAccessor = httpContextAccessor;
             _sessionService = sessionService;
 
             _questions = new List<Question>()
@@ -30,12 +28,6 @@ namespace QuestionnaireApp.Controllers
         [HttpGet]
         public ActionResult<Question> Get()
         {
-            //var currentQuestionId = _httpContextAccessor.HttpContext?.Session.GetString("currentQuestionId");
-            //if (string.IsNullOrEmpty(currentQuestionId))
-            //{
-            //    _httpContextAccessor.HttpContext?.Session.SetString("currentQuestionId", "1");
-            //    currentQuestionId = "1";
-            //}
 
             var currentQuestionId = _sessionService.GetCurrentQuestionId();
 
@@ -46,14 +38,7 @@ namespace QuestionnaireApp.Controllers
         public ActionResult Post(Answer answer)
         {
 
-            // var currentQuestionId = _httpContextAccessor.HttpContext?.Session.GetString("currentQuestionId");
-
             var currentQuestionId = _sessionService.GetCurrentQuestionId();
-
-            //if (!int.TryParse(currentQuestionId, out int currentQuestionIdValue))
-            //{
-            //    return BadRequest($"Invalid current question id: {currentQuestionId}");
-            //}
 
             if (currentQuestionId != answer.QuestionId)
             {
