@@ -36,6 +36,7 @@ namespace QuestionnaireApp
             services.AddHttpContextAccessor();
             services.AddSession();
             services.AddScoped<ISessionService, SessionService>();
+            services.AddScoped<IQuestionValidator, QuestionValidator>();
 
         }
 

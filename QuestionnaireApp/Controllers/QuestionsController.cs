@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,11 +12,13 @@ namespace QuestionnaireApp.Controllers
     public class QuestionsController : ControllerBase
     {
         private readonly ISessionService _sessionService;
+        private readonly IQuestionValidator _questionValidator;
         private readonly List<Question> _questions;
         
-        public QuestionsController(ISessionService sessionService)
+        public QuestionsController(ISessionService sessionService, IQuestionValidator questionValidator)
         {
             _sessionService = sessionService;
+            _questionValidator = questionValidator;
 
             _questions = new List<Question>()
             {
@@ -54,14 +58,17 @@ namespace QuestionnaireApp.Controllers
 
             // validate by question types
 
+            if (!_questionValidator.Validate(question, answer))
+            {
+                return BadRequest("Answer is invalid");
+            }
 
-
-            // Save to db
+            // Save answer to db
 
 
             // Increment current question id
             var nextQuestionId = currentQuestionId + 1;
-            if (nextQuestionId > _questions.Count)
+            if (nextQuestionId > _questions.Max(q => q.Id))
             {
                 nextQuestionId = 1;
             }
@@ -79,6 +86,8 @@ namespace QuestionnaireApp.Controllers
         public string QuestionText { get; set; }
         public List<string> Choices { get; set; }
         public QuestionTypes Type { get; set; }
+
+        public List<string> InvalidChoices { get; set; }
     }
 
     public class Answer
@@ -123,6 +132,54 @@ namespace QuestionnaireApp.Controllers
         public void SetCurrentQuestionId(int currentQuestionId)
         {
             _httpContextAccessor.HttpContext?.Session.SetString("currentQuestionId", currentQuestionId.ToString());
+        }
+    }
+
+    public interface IQuestionValidator
+    {
+        bool Validate(Question question, Answer answer);
+    }
+
+    public class QuestionValidator : IQuestionValidator
+    {
+        public bool Validate(Question question, Answer answer)
+        {
+            switch (question.Type)
+            {
+                case QuestionTypes.Text:
+                    return ValidateQuestionText(answer.AnswerText);
+                case QuestionTypes.Date:
+                    return ValidateQuestionDate(answer.AnswerText);
+                case QuestionTypes.Choices:
+                    return ValidateQuestionChoices(answer.AnswerText, question.InvalidChoices);
+                default:
+                    throw new Exception("Invalid question type");
+            }
+        }
+
+        private bool ValidateQuestionChoices(string answerAnswerText, List<string> invalidChoices)
+        {
+            if (invalidChoices.Contains(answerAnswerText))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool ValidateQuestionDate(string answerAnswerText)
+        {
+            var format = "yyyy-MM-dd";
+            return DateTime.TryParseExact(answerAnswerText, 
+                format, 
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None, 
+                out var dateTime2);
+        }
+
+        private bool ValidateQuestionText(string answerAnswerText)
+        {
+            return !string.IsNullOrEmpty(answerAnswerText);
         }
     }
 }
