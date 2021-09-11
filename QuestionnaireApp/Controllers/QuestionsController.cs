@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
+﻿using System.Collections.Generic;
 using System.Linq;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using QuestionnaireApp.Services;
 
 namespace QuestionnaireApp.Controllers
 {
@@ -101,85 +99,5 @@ namespace QuestionnaireApp.Controllers
         Text,
         Choices,
         Date
-    }
-    public interface ISessionService
-    {
-        public int GetCurrentQuestionId();
-        public void SetCurrentQuestionId(int currentQuestionId);
-    }
-
-    public class SessionService : ISessionService
-    {
-        private readonly IHttpContextAccessor _httpContextAccessor;
-
-        public SessionService(IHttpContextAccessor httpContextAccessor)
-        {
-            _httpContextAccessor = httpContextAccessor;
-        }
-
-        public int GetCurrentQuestionId()
-        {
-            var currentQuestionId = _httpContextAccessor.HttpContext?.Session.GetString("currentQuestionId");
-            if (string.IsNullOrEmpty(currentQuestionId))
-            {
-                _httpContextAccessor.HttpContext?.Session.SetString("currentQuestionId", "1");
-                currentQuestionId = "1";
-            }
-
-            return int.Parse(currentQuestionId);
-        }
-
-        public void SetCurrentQuestionId(int currentQuestionId)
-        {
-            _httpContextAccessor.HttpContext?.Session.SetString("currentQuestionId", currentQuestionId.ToString());
-        }
-    }
-
-    public interface IQuestionValidator
-    {
-        bool Validate(Question question, Answer answer);
-    }
-
-    public class QuestionValidator : IQuestionValidator
-    {
-        public bool Validate(Question question, Answer answer)
-        {
-            switch (question.Type)
-            {
-                case QuestionTypes.Text:
-                    return ValidateQuestionText(answer.AnswerText);
-                case QuestionTypes.Date:
-                    return ValidateQuestionDate(answer.AnswerText);
-                case QuestionTypes.Choices:
-                    return ValidateQuestionChoices(answer.AnswerText, question.InvalidChoices);
-                default:
-                    throw new Exception("Invalid question type");
-            }
-        }
-
-        private bool ValidateQuestionChoices(string answerAnswerText, List<string> invalidChoices)
-        {
-            if (invalidChoices.Contains(answerAnswerText))
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        private bool ValidateQuestionDate(string answerAnswerText)
-        {
-            var format = "yyyy-MM-dd";
-            return DateTime.TryParseExact(answerAnswerText, 
-                format, 
-                CultureInfo.InvariantCulture,
-                DateTimeStyles.None, 
-                out var dateTime2);
-        }
-
-        private bool ValidateQuestionText(string answerAnswerText)
-        {
-            return !string.IsNullOrEmpty(answerAnswerText);
-        }
     }
 }
