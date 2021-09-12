@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
@@ -107,28 +105,4 @@ namespace QuestionnaireApp.Controllers.Admin
             return _context.Questions.Any(e => e.Id == id);
         }
     }
-
-
-    [Route("api/admin/[controller]")]
-    [ApiController]
-    public class ResponsesController : ControllerBase
-    {
-        private readonly AppDbContext _appDbContext;
-
-        public ResponsesController(AppDbContext appDbContext)
-        {
-            _appDbContext = appDbContext;
-        }
-
-        [HttpGet("Download")]
-        public async Task<FileResult> Download(string userId)
-        {
-            var data = await _appDbContext.Responses
-                .Where(r => r.UserId == userId)
-                .OrderBy(r => r.QuestionId)
-                .ToListAsync();
-            return null;
-        }
-    }
-
 }
