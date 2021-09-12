@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -84,18 +83,5 @@ namespace QuestionnaireApp.Controllers
 
             return Ok();
         }
-    }
-
-    public class Answer
-    {
-        public int QuestionId { get; set; }
-        public string AnswerText { get; set; }
-    }
-
-    public enum QuestionTypes
-    {
-        Text,
-        Choices,
-        Date
     }
 }
