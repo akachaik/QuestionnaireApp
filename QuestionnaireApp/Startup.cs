@@ -12,6 +12,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using QuestionnaireApp.Controllers;
 using QuestionnaireApp.Services;
+using Microsoft.EntityFrameworkCore;
+using QuestionnaireApp.Data;
 
 namespace QuestionnaireApp
 {
@@ -38,6 +40,9 @@ namespace QuestionnaireApp
             services.AddSession();
             services.AddScoped<ISessionService, SessionService>();
             services.AddScoped<IQuestionValidator, QuestionValidator>();
+
+            services.AddDbContext<AppDbContext>(options =>
+                    options.UseSqlServer(Configuration.GetConnectionString("AppDbContext")));
 
         }
 

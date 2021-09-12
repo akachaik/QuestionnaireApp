@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using QuestionnaireApp.Controllers;
+using QuestionnaireApp.Models;
 
 namespace QuestionnaireApp.Services
 {
@@ -22,9 +24,14 @@ namespace QuestionnaireApp.Services
             }
         }
 
-        private bool ValidateQuestionChoices(string answerAnswerText, List<string> invalidChoices)
+        private bool ValidateQuestionChoices(string answerAnswerText, string invalidChoices)
         {
-            if (invalidChoices.Contains(answerAnswerText))
+            if (string.IsNullOrEmpty(invalidChoices))
+            {
+                return true;
+            }
+
+            if (invalidChoices.Split(',').Contains(answerAnswerText))
             {
                 return false;
             }

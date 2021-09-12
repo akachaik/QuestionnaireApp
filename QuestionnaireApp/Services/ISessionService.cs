@@ -4,5 +4,7 @@
     {
         public int GetCurrentQuestionId();
         public void SetCurrentQuestionId(int currentQuestionId);
+
+        public string GetCurrentUserId();
     }
 }

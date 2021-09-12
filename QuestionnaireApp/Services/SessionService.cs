@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System;
+using Microsoft.AspNetCore.Http;
 
 namespace QuestionnaireApp.Services
 {
@@ -21,6 +22,19 @@ namespace QuestionnaireApp.Services
             }
 
             return int.Parse(currentQuestionId);
+        }
+
+        public string GetCurrentUserId()
+        {
+            var currentUserId = _httpContextAccessor.HttpContext?.Session.GetString("currentUserId");
+            if (string.IsNullOrEmpty(currentUserId))
+            {
+                var newUserId = Guid.NewGuid().ToString();
+                _httpContextAccessor.HttpContext?.Session.SetString("currentUserId", newUserId);
+                currentUserId = newUserId;
+            }
+
+            return currentUserId;
         }
 
         public void SetCurrentQuestionId(int currentQuestionId)

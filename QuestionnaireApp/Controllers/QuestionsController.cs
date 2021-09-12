@@ -1,43 +1,41 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using QuestionnaireApp.Data;
+using QuestionnaireApp.Models;
 using QuestionnaireApp.Services;
 
 namespace QuestionnaireApp.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class QuestionsController : ControllerBase
     {
         private readonly ISessionService _sessionService;
         private readonly IQuestionValidator _questionValidator;
-        private readonly List<Question> _questions;
+        private readonly AppDbContext _appDbContext;
         
-        public QuestionsController(ISessionService sessionService, IQuestionValidator questionValidator)
+        public QuestionsController(ISessionService sessionService, IQuestionValidator questionValidator, AppDbContext appDbContext)
         {
             _sessionService = sessionService;
             _questionValidator = questionValidator;
-
-            _questions = new List<Question>()
-            {
-                new() { Id = 1, QuestionText = "Title (Mr. Ms. or Mrs.)", Type = QuestionTypes.Choices, Choices = new List<string> { "Mr.", "Ms.", "Mrs."}},
-                new() { Id = 2, QuestionText = "First name", Type = QuestionTypes.Text},
-                new() { Id = 3, QuestionText = "Last name", Type = QuestionTypes.Text},
-                new() { Id = 4, QuestionText = "Date of birth", Type = QuestionTypes.Date},
-            };
+            _appDbContext = appDbContext;
         }
 
         [HttpGet]
-        public ActionResult<Question> Get()
+        public async Task<ActionResult<Question>> Get()
         {
 
             var currentQuestionId = _sessionService.GetCurrentQuestionId();
+            var questions = await _appDbContext.Questions.ToListAsync();
 
-            return Ok(_questions.FirstOrDefault(q => q.Id == currentQuestionId));
+            return Ok(questions.FirstOrDefault(q => q.Id == currentQuestionId));
         }
 
         [HttpPost]
-        public ActionResult Post(Answer answer)
+        public async Task<ActionResult> Post(Answer answer)
         {
 
             var currentQuestionId = _sessionService.GetCurrentQuestionId();
@@ -48,7 +46,8 @@ namespace QuestionnaireApp.Controllers
             }
 
             // validate
-            var question = _questions.FirstOrDefault(q => q.Id == answer.QuestionId);
+            var questions = await _appDbContext.Questions.ToListAsync();
+            var question = questions.FirstOrDefault(q => q.Id == answer.QuestionId);
             if (question is null)
             {
                 return BadRequest($"Invalid question id: {answer.QuestionId}");
@@ -63,10 +62,19 @@ namespace QuestionnaireApp.Controllers
 
             // Save answer to db
 
+            var response = new Response()
+            {
+                UserId = _sessionService.GetCurrentUserId(),
+                QuestionId = question.Id,
+                AnswerText = answer.AnswerText
+            };
+
+            _appDbContext.Responses.Add(response);
+            await _appDbContext.SaveChangesAsync();
 
             // Increment current question id
             var nextQuestionId = currentQuestionId + 1;
-            if (nextQuestionId > _questions.Max(q => q.Id))
+            if (nextQuestionId > questions.Max(q => q.Id))
             {
                 nextQuestionId = 1;
             }
@@ -76,16 +84,6 @@ namespace QuestionnaireApp.Controllers
 
             return Ok();
         }
-    }
-
-    public class Question
-    {
-        public int Id { get; set; }
-        public string QuestionText { get; set; }
-        public List<string> Choices { get; set; }
-        public QuestionTypes Type { get; set; }
-
-        public List<string> InvalidChoices { get; set; }
     }
 
     public class Answer
